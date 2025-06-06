@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { LocationObjectCoords } from "expo-location";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   Modal,
@@ -33,6 +33,9 @@ const Categories = () => {
   const [newPinCoords, setNewPinCoords] =
     useState<Partial<LocationObjectCoords> | null>(null);
 
+  // Flaga: czy kliknięto w marker?
+  const markerClicked = useRef(false);
+
   useEffect(() => {
     (async () => {
       const info = await Location.requestForegroundPermissionsAsync();
@@ -47,9 +50,20 @@ const Categories = () => {
   }, []);
 
   const handleMapPress = (event: NativeSyntheticEvent<any>) => {
+    if (markerClicked.current) {
+      // Kliknięto marker – nie pokazuj modala!
+      markerClicked.current = false; // Reset
+      return;
+    }
+    if (modalVisible) return;
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setNewPinCoords({ latitude, longitude });
     setModalVisible(true);
+  };
+
+  const handleMarkerPress = () => {
+    console.log("👉 Kliknięto marker");
+    markerClicked.current = true;
   };
 
   const handleAddPin = () => {
@@ -112,6 +126,7 @@ const Categories = () => {
               latitude: cafe.latitude,
               longitude: cafe.longitude,
             }}
+            onPress={handleMarkerPress} // Dodaj to!
           >
             <Callout onPress={() => handleDeletePin(cafe.id)}>
               <View
@@ -138,10 +153,6 @@ const Categories = () => {
         />
       </MapView>
       <UrlTile
-        /**
-         * OpenStreetMap tile server URL
-         * Zobacz: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-         */
         urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         maximumZ={19}
         flipY={false}
@@ -153,7 +164,6 @@ const Categories = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
     backgroundColor: "#f0f0f0",
   },
   modal: {
