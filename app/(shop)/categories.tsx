@@ -1,21 +1,20 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  NativeSyntheticEvent,
-  Modal,
-  TextInput,
-  Button,
-} from "react-native";
-import React, { use, useEffect, useState } from "react";
-import { Link } from "expo-router";
 import * as Location from "expo-location";
 import { LocationObjectCoords } from "expo-location";
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  Modal,
+  NativeSyntheticEvent,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import MapView, {
+  Callout,
+  Marker,
   PROVIDER_DEFAULT,
   UrlTile,
-  Marker,
-  ClickEvent,
 } from "react-native-maps";
 
 const initialCafes = [
@@ -31,7 +30,8 @@ const Categories = () => {
     useState<Location.LocationObjectCoords | null>(null);
   const [newPinName, setNewPinName] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [newPinCoords, setNewPinCoords] = useState<Partial<LocationObjectCoords> | null>(null);
+  const [newPinCoords, setNewPinCoords] =
+    useState<Partial<LocationObjectCoords> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +66,10 @@ const Categories = () => {
     setNewPinCoords(null);
   };
 
+  const handleDeletePin = (id: string) => {
+    setCafes((prevCafes) => prevCafes.filter((cafe) => cafe.id !== id));
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -77,9 +81,10 @@ const Categories = () => {
   return (
     <View style={styles.container}>
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View>
+        <View style={styles.modal}>
           <Text>Dodaj nowy punkt</Text>
           <TextInput
+            style={styles.field}
             value={newPinName}
             onChangeText={setNewPinName}
             placeholder="Nazwa punktu"
@@ -107,9 +112,21 @@ const Categories = () => {
               latitude: cafe.latitude,
               longitude: cafe.longitude,
             }}
-            title={cafe.name}
-            description={`This is ${cafe.name}.`}
-          />
+          >
+            <Callout onPress={() => handleDeletePin(cafe.id)}>
+              <View
+                style={{
+                  width: 150,
+                  alignItems: "center",
+                  backgroundColor: "#fff",
+                  padding: 10,
+                }}
+              >
+                <Text>{cafe.name}</Text>
+                <Button title="Usuń" color="red" />
+              </View>
+            </Callout>
+          </Marker>
         ))}
         <Marker
           coordinate={{
@@ -138,6 +155,19 @@ const styles = StyleSheet.create({
     flex: 1,
 
     backgroundColor: "#f0f0f0",
+  },
+  modal: {
+    margin: 50,
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgb(255, 255, 255)",
+  },
+  field: {
+    borderWidth: 1,
+    borderColor: "#000000",
+    borderRadius: 4,
+    padding: 10,
   },
 });
 
