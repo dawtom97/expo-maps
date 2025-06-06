@@ -1,8 +1,22 @@
-import { View, Text, StyleSheet, NativeSyntheticEvent, Modal, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  NativeSyntheticEvent,
+  Modal,
+  TextInput,
+  Button,
+} from "react-native";
 import React, { use, useEffect, useState } from "react";
 import { Link } from "expo-router";
 import * as Location from "expo-location";
-import MapView, { PROVIDER_DEFAULT, UrlTile, Marker, ClickEvent } from "react-native-maps";
+import { LocationObjectCoords } from "expo-location";
+import MapView, {
+  PROVIDER_DEFAULT,
+  UrlTile,
+  Marker,
+  ClickEvent,
+} from "react-native-maps";
 
 const initialCafes = [
   { id: "1", name: "Cafe A", latitude: 37.28825, longitude: -122.4324 },
@@ -15,9 +29,9 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [location, setLocation] =
     useState<Location.LocationObjectCoords | null>(null);
-
   const [newPinName, setNewPinName] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [newPinCoords, setNewPinCoords] = useState<Partial<LocationObjectCoords> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -32,22 +46,25 @@ const Categories = () => {
     })();
   }, []);
 
-
   const handleMapPress = (event: NativeSyntheticEvent<any>) => {
-    const {latitude, longitude} = event.nativeEvent.coordinate  
-    console.log(latitude, longitude);
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setNewPinCoords({ latitude, longitude });
+    setModalVisible(true);
+  };
 
+  const handleAddPin = () => {
+    if (!newPinCoords?.latitude || !newPinCoords?.longitude) return;
     const newCafe = {
       id: Date.now().toString(),
-      name: `Cafe ${cafes.length + 1}`,
-      latitude,
-      longitude,
-    }
-
+      name: newPinName || `Cafe ${cafes.length + 1}`,
+      latitude: newPinCoords.latitude,
+      longitude: newPinCoords.longitude,
+    };
     setCafes((prevCafes) => [...prevCafes, newCafe]);
-
-  }
-
+    setModalVisible(false);
+    setNewPinName("");
+    setNewPinCoords(null);
+  };
 
   if (loading) {
     return (
@@ -59,18 +76,18 @@ const Categories = () => {
 
   return (
     <View style={styles.container}>
-
       <Modal visible={modalVisible} animationType="slide" transparent>
-          <View>
-            <Text>Dodaj nowy punkt</Text>
-            <TextInput
-              value={newPinName}
-              onChangeText={setNewPinName}
-              placeholder="Nazwa punktu"
-            />
-          </View>
+        <View>
+          <Text>Dodaj nowy punkt</Text>
+          <TextInput
+            value={newPinName}
+            onChangeText={setNewPinName}
+            placeholder="Nazwa punktu"
+          />
+          <Button title="Anuluj" onPress={() => setModalVisible(false)} />
+          <Button title="Dodaj" onPress={handleAddPin} />
+        </View>
       </Modal>
-
 
       <MapView
         onPress={handleMapPress}
